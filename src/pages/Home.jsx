@@ -6,64 +6,47 @@ import Error from "../components/common/Error";
 import Pagination from "../components/common/Pagination";
 import useMovies from "../hooks/useMovies";
 import HeroBanner from "../components/banner/HeroBanner";
-import FilterBar from "../components/filter/FilterBar";
 import MovieRow from "../components/movie/MovieRow";
-import { searchMovies } from "../services/omdbApi";
-import { useFavorites } from "../context/FavoritesContext";
+import FilterDropdown from "../components/filter/FilterDropdown";
+import { getTrendingMovies, searchMovies } from "../services/omdbApi";
 import uiTemplateImage from "../assets/images/ui_template.png";
-
-const ROW_DEFINITIONS = [
-  { key: "trending", title: "Trending Today", query: "trending movies" },
-  { key: "topRated", title: "Top Rated", query: "top rated imdb" },
-  { key: "newReleases", title: "New Releases", query: `${new Date().getFullYear()} movie` },
-  { key: "webSeries", title: "Popular Web Series", query: "web series" },
-  { key: "hindi", title: "Hindi Movies", query: "hindi movie" },
-  { key: "bengali", title: "Bengali Movies", query: "bengali movie" },
-  { key: "hollywood", title: "Hollywood Picks", query: "hollywood movie" },
-  { key: "action", title: "Action", query: "action movie" },
-  { key: "comedy", title: "Comedy", query: "comedy movie" },
-];
-
-const FILTER_TO_KEYS = {
-  All: ROW_DEFINITIONS.map((row) => row.key),
-  "Web Series": ["webSeries"],
-  Hindi: ["hindi"],
-  Bengali: ["bengali"],
-  Hollywood: ["hollywood"],
-  Action: ["action"],
-  Comedy: ["comedy"],
-};
 
 function Home() {
   const { movies, query, page, setPage, totalResults, loading, error, fetchMovies } = useMovies();
-  const { favorites } = useFavorites();
-  const [filter, setFilter] = useState("All");
-  const [rowMovies, setRowMovies] = useState({});
+
+  const [filter, setFilter] = useState("all");
   const [rowsLoading, setRowsLoading] = useState(true);
+  const [trending, setTrending] = useState([]);
+  const [hindiMovies, setHindiMovies] = useState([]);
+  const [bengaliMovies, setBengaliMovies] = useState([]);
+  const [webSeries, setWebSeries] = useState([]);
+  const [hollywoodMovies, setHollywoodMovies] = useState([]);
 
   useEffect(() => {
     let active = true;
 
-    const fetchRows = async () => {
+    const fetchHomeRows = async () => {
       setRowsLoading(true);
-      const entries = await Promise.all(
-        ROW_DEFINITIONS.map(async (row) => {
-          try {
-            const data = await searchMovies(row.query, 1);
-            return [row.key, data?.Search || []];
-          } catch {
-            return [row.key, []];
-          }
-        })
-      );
 
-      if (active) {
-        setRowMovies(Object.fromEntries(entries));
-        setRowsLoading(false);
-      }
+      const [trendingData, hindiData, bengaliData, seriesData, hollywoodData] = await Promise.all([
+        getTrendingMovies(),
+        searchMovies("hindi movie", 1),
+        searchMovies("bengali movie", 1),
+        searchMovies("web series", 1),
+        searchMovies("hollywood movie", 1),
+      ]);
+
+      if (!active) return;
+
+      setTrending(trendingData || []);
+      setHindiMovies(hindiData?.Search || []);
+      setBengaliMovies(bengaliData?.Search || []);
+      setWebSeries(seriesData?.Search || []);
+      setHollywoodMovies(hollywoodData?.Search || []);
+      setRowsLoading(false);
     };
 
-    fetchRows();
+    fetchHomeRows();
 
     return () => {
       active = false;
@@ -72,19 +55,6 @@ function Home() {
 
   const suggestions = useMemo(() => movies.slice(0, 6), [movies]);
   const hasNext = page * 10 < totalResults;
-
-  const heroMovies = useMemo(() => {
-    const source = rowMovies.trending || [];
-    return source.slice(0, 8);
-  }, [rowMovies]);
-
-  const visibleRows = useMemo(() => {
-    const selectedKeys = FILTER_TO_KEYS[filter] || FILTER_TO_KEYS.All;
-    return ROW_DEFINITIONS.filter((row) => selectedKeys.includes(row.key)).map((row) => ({
-      ...row,
-      movies: rowMovies[row.key] || [],
-    }));
-  }, [filter, rowMovies]);
 
   const handleSearch = (searchText) => {
     fetchMovies(searchText, 1);
@@ -100,6 +70,21 @@ function Home() {
     });
   };
 
+  const rowsByFilter = {
+    all: [
+      { title: "Trending Movies", movies: trending },
+      { title: "Hindi Movies", movies: hindiMovies },
+      { title: "Bengali Movies", movies: bengaliMovies },
+      { title: "Web Series", movies: webSeries },
+    ],
+    series: [{ title: "Web Series", movies: webSeries }],
+    hindi: [{ title: "Hindi Movies", movies: hindiMovies }],
+    bengali: [{ title: "Bengali Movies", movies: bengaliMovies }],
+    hollywood: [{ title: "Hollywood Movies", movies: hollywoodMovies }],
+  };
+
+  const visibleRows = rowsByFilter[filter] || rowsByFilter.all;
+
   return (
     <div className="space-y-8">
       <section className="relative rounded-2xl overflow-hidden border border-gray-300/70 dark:border-gray-700/70">
@@ -112,7 +97,7 @@ function Home() {
           <div>
             <p className="uppercase tracking-[0.25em] text-xs text-amber-300">Entry Layout</p>
             <h1 className="text-2xl md:text-4xl font-bold text-white mt-2">Discover your next watch</h1>
-            <p className="text-sm md:text-base text-gray-200 mt-2">Netflix and Prime inspired browsing with banner, filters, and rows.</p>
+            <p className="text-sm md:text-base text-gray-200 mt-2">Netflix-style homepage with hero slider, filters, and curated rows.</p>
           </div>
         </div>
       </section>
@@ -142,15 +127,8 @@ function Home() {
         </>
       ) : (
         <>
-          <HeroBanner movies={heroMovies} />
-          <FilterBar filter={filter} setFilter={setFilter} />
-
-          {favorites.length > 0 && (
-            <>
-              <MovieRow title="Continue Watching" movies={favorites.slice(0, 10)} />
-              <MovieRow title="Saved Favorites" movies={favorites} />
-            </>
-          )}
+          <HeroBanner movies={trending} />
+          <FilterDropdown filter={filter} setFilter={setFilter} />
 
           {rowsLoading && (
             <div className="flex gap-4 overflow-x-auto pb-2">
@@ -161,13 +139,9 @@ function Home() {
           )}
 
           {!rowsLoading && visibleRows.map((row) => (
-            <MovieRow key={row.key} title={row.title} movies={row.movies} />
+            <MovieRow key={row.title} title={row.title} movies={row.movies} />
           ))}
         </>
-      )}
-
-      {!loading && !error && !query && !rowsLoading && visibleRows.every((row) => row.movies.length === 0) && (
-        <p className="text-center text-gray-600 dark:text-gray-500 mt-8">No curated content found right now.</p>
       )}
     </div>
   );

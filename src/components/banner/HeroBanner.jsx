@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
+import { Autoplay, FreeMode } from "swiper/modules";
 import "swiper/css";
+import "swiper/css/free-mode";
 import { getPoster } from "../../utils/helpers";
 
 function HeroBanner({ movies = [] }) {
@@ -9,12 +10,25 @@ function HeroBanner({ movies = [] }) {
 
   return (
     <Swiper
-      modules={[Autoplay]}
-      autoplay={{ delay: 3000, disableOnInteraction: false }}
+      modules={[Autoplay, FreeMode]}
+      slidesPerView={3}
+      spaceBetween={20}
       loop
+      speed={5000}
+      freeMode
+      autoplay={{
+        delay: 0,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
+      }}
+      breakpoints={{
+        0: { slidesPerView: 1 },
+        768: { slidesPerView: 2 },
+        1024: { slidesPerView: 3 },
+      }}
       className="rounded-2xl overflow-hidden"
     >
-      {movies.slice(0, 5).map((movie) => (
+      {movies.map((movie) => (
         <SwiperSlide key={movie.imdbID}>
           <Link to={`/movie/${movie.imdbID}`}>
             <div
