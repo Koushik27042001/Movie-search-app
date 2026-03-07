@@ -4,6 +4,7 @@ import { getMovieDetails } from "../services/omdbApi";
 import { useFavorites } from "../context/FavoritesContext";
 import Button from "../components/common/Button";
 import Loader from "../components/common/Loader";
+import { getPoster } from "../utils/helpers";
 
 function MovieDetails() {
   const { id } = useParams();
@@ -36,11 +37,21 @@ function MovieDetails() {
   if (loading) return <Loader />;
   if (!movie) return <p className="text-red-400">Movie not found</p>;
 
-  const posterUrl = movie.Poster && movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300x450?text=No+Poster";
+  const fallbackPoster = getPoster(null, "400x600");
+  const posterUrl = getPoster(movie.Poster, "400x600");
 
   return (
     <div className="flex flex-col md:flex-row gap-6">
-      <img src={posterUrl} alt={movie.Title} className="w-full md:w-64 rounded-lg object-cover" />
+      <img
+        src={posterUrl}
+        alt={movie.Title}
+        className="w-full md:w-64 rounded-lg object-cover"
+        loading="lazy"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = fallbackPoster;
+        }}
+      />
       <div className="flex-1">
         <h1 className="text-3xl font-bold">{movie.Title}</h1>
         <p className="text-gray-400 mt-1">{movie.Year} • {movie.Runtime}</p>

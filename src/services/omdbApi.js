@@ -25,3 +25,31 @@ export const getMovieDetails = async (id) => {
 
   return res.data;
 };
+
+export const getTrendingMovies = async () => {
+  const keywords = ["avengers", "batman", "marvel", "spiderman", "top"];
+
+  const responses = await Promise.all(
+    keywords.map(async (keyword) => {
+      try {
+        const data = await searchMovies(keyword, 1);
+        return data?.Search || [];
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  const merged = responses.flat();
+  const unique = [];
+  const seen = new Set();
+
+  for (const movie of merged) {
+    if (!seen.has(movie.imdbID)) {
+      seen.add(movie.imdbID);
+      unique.push(movie);
+    }
+  }
+
+  return unique.slice(0, 20);
+};
