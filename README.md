@@ -26,3 +26,21 @@ A React movie search app powered by the OMDB API.
 - View movie details
 - Add/remove favorites (persisted in localStorage)
 - Responsive layout with Tailwind CSS
+
+
+
+
+
+"//If you want, I can also show you 5 advanced features that make this project look like a FAANG-level frontend project, such as:
+
+AI movie recommendation
+
+Netflix-style hover expansion cards
+
+Animated cinematic hero section
+
+Performance optimization
+
+Production-grade folder architecture
+
+These are the kinds of things recruiters love seeing in portfolios.//"

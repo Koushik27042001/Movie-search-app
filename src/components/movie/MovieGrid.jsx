@@ -1,8 +1,8 @@
 import MovieCard from "./MovieCard";
 import MovieSkeleton from "./MovieSkeleton";
 
-function MovieGrid({ movies, loading }) {
-  if (loading) {
+function MovieGrid({ movies, loading, onTrailer }) {
+  if (loading && !movies.length) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
         {[...Array(8)].map((_, i) => (
@@ -15,8 +15,10 @@ function MovieGrid({ movies, loading }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
       {movies.map((movie) => (
-        <MovieCard key={movie.imdbID} movie={movie} />
+        <MovieCard key={movie.imdbID} movie={movie} onTrailer={onTrailer} />
       ))}
+      {loading &&
+        [...Array(4)].map((_, i) => <MovieSkeleton key={`loading-${i}`} />)}
     </div>
   );
 }

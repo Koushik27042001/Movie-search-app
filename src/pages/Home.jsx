@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 
 import SearchBar from "../components/search/SearchBar";
 import MovieGrid from "../components/movie/MovieGrid";
 import Error from "../components/common/Error";
-import Pagination from "../components/common/Pagination";
+import Loader from "../components/common/Loader";
 import useMovies from "../hooks/useMovies";
 
 import HeroBanner from "../components/banner/HeroBanner";
 import MovieRow from "../components/movie/MovieRow";
+import TrailerModal from "../components/movie/TrailerModal";
 import FilterDropdown from "../components/filter/FilterDropdown";
 
 import { getTrendingMovies, searchMovies } from "../services/omdbApi";
@@ -23,7 +25,6 @@ function Home() {
     movies,
     query,
     page,
-    setPage,
     totalResults,
     loading,
     error,
@@ -38,6 +39,11 @@ function Home() {
   const [bengaliMovies, setBengaliMovies] = useState([]);
   const [webSeries, setWebSeries] = useState([]);
   const [hollywoodMovies, setHollywoodMovies] = useState([]);
+  const [selectedTrailerMovie, setSelectedTrailerMovie] = useState(null);
+
+  const { ref, inView } = useInView({
+    rootMargin: "300px",
+  });
 
   // UI template cards
   const templates = [
@@ -113,24 +119,23 @@ function Home() {
     fetchMovies(searchText, 1);
   };
 
-  const handlePageChange = (updater) => {
-    setPage((prev) => {
-      const nextPage =
-        typeof updater === "function" ? updater(prev) : updater;
+  const handleTrailerOpen = (movie) => setSelectedTrailerMovie(movie);
+  const handleTrailerClose = () => setSelectedTrailerMovie(null);
 
-      if (query && nextPage !== prev) {
-        fetchMovies(query, nextPage);
-      }
+  useEffect(() => {
+    if (!inView || !query || loading || !hasNext) {
+      return;
+    }
 
-      return nextPage;
-    });
-  };
+    const nextPage = page + 1;
+    fetchMovies(query, nextPage, true);
+  }, [inView, query, loading, hasNext, page, fetchMovies]);
 
   const rowsByFilter = {
     all: [
-      { title: "Trending Movies", movies: trending },
       { title: "Hindi Movies", movies: hindiMovies },
       { title: "Bengali Movies", movies: bengaliMovies },
+      { title: "Hollywood Movies", movies: hollywoodMovies },
       { title: "Web Series", movies: webSeries },
     ],
     series: [{ title: "Web Series", movies: webSeries }],
@@ -196,17 +201,16 @@ function Home() {
             transition={{ duration: 0.5 }}
           >
             {(loading || movies.length > 0) && (
-              <MovieGrid movies={movies} loading={loading} />
+              <MovieGrid
+                movies={movies}
+                loading={loading}
+                onTrailer={handleTrailerOpen}
+              />
             )}
           </motion.div>
 
-          {!loading && !error && movies.length > 0 && (
-            <Pagination
-              page={page}
-              setPage={handlePageChange}
-              hasNext={hasNext}
-            />
-          )}
+          {!error && movies.length > 0 && hasNext && <div ref={ref} className="h-10" />}
+          {loading && movies.length > 0 && <Loader />}
 
           {!loading && !error && query && movies.length === 0 && (
             <p className="mt-8 text-center text-gray-600 dark:text-gray-500">
@@ -228,10 +232,21 @@ function Home() {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="w-[140px] md:w-[170px] h-[210px] md:h-[255px] rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0"
+                  className="animate-pulse bg-gray-300 dark:bg-gray-700 rounded-lg w-[170px] h-[255px] shrink-0"
                 />
               ))}
             </div>
+          )}
+
+          {!rowsLoading && (
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Trending Today</h2>
+              <MovieRow
+                title="Trending Today"
+                movies={trending}
+                onTrailer={handleTrailerOpen}
+              />
+            </section>
           )}
 
           {/* Movie Rows */}
@@ -241,10 +256,13 @@ function Home() {
                 key={row.title}
                 title={row.title}
                 movies={row.movies}
+                onTrailer={handleTrailerOpen}
               />
             ))}
         </>
       )}
+
+      <TrailerModal movie={selectedTrailerMovie} onClose={handleTrailerClose} />
     </div>
   );
 }

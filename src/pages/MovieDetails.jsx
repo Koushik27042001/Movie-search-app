@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import ReactStars from "react-rating-stars-component";
 import { getMovieDetails } from "../services/omdbApi";
 import { useFavorites } from "../context/FavoritesContext";
 import Button from "../components/common/Button";
@@ -29,7 +30,7 @@ function MovieDetails() {
         Title: movie.Title,
         Year: movie.Year,
         Poster: movie.Poster,
-        Type: movie.Type
+        Type: movie.Type,
       });
     }
   };
@@ -54,9 +55,27 @@ function MovieDetails() {
       />
       <div className="flex-1">
         <h1 className="text-3xl font-bold">{movie.Title}</h1>
-        <p className="text-gray-400 mt-1">{movie.Year} • {movie.Runtime}</p>
+        <p className="text-gray-400 mt-1">
+          {movie.Year} - {movie.Runtime}
+        </p>
         <p className="mt-4">{movie.Plot}</p>
-        <p className="mt-2">{movie.imdbRating !== "N/A" ? `⭐ ${movie.imdbRating}` : "No rating"}</p>
+
+        {movie.imdbRating !== "N/A" ? (
+          <div className="mt-4">
+            <ReactStars
+              count={5}
+              value={Number(movie.imdbRating) / 2}
+              size={24}
+              edit={false}
+              isHalf
+              activeColor="#f59e0b"
+            />
+            <p className="mt-1 text-gray-300">{movie.imdbRating} / 10</p>
+          </div>
+        ) : (
+          <p className="mt-2 text-gray-400">No rating</p>
+        )}
+
         <p className="mt-2 text-gray-400">
           <span className="text-white">Genre:</span> {movie.Genre}
         </p>
