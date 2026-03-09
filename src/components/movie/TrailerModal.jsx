@@ -3,33 +3,37 @@ import { motion } from "framer-motion";
 function TrailerModal({ movie, onClose }) {
   if (!movie) return null;
 
-  const trailerQuery = encodeURIComponent(`${movie.Title} trailer`);
+  // Format the search query
+  const searchQuery = encodeURIComponent(`${movie.Title} official trailer`);
+
+  // Use the special YouTube search embed format
+  const embedUrl = `https://www.youtube.com/embed?listType=search&list=${searchQuery}&autoplay=1`;
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 p-6 rounded-lg max-w-2xl w-full"
+        className="w-full max-w-2xl p-6 bg-gray-900 rounded-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <h2 className="text-xl font-bold mb-4 text-white">{movie.Title} Trailer</h2>
+        <h2 className="mb-4 text-xl font-bold text-white">{movie.Title} Trailer</h2>
 
         <iframe
-          className="w-full h-64 md:h-80 rounded"
+          className="w-full h-64 rounded md:h-80"
           title={`${movie.Title} trailer`}
-          src={`https://www.youtube.com/embed?listType=search&list=${trailerQuery}`}
+          src={embedUrl}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-        />
+        ></iframe>
 
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 bg-red-500 px-4 py-2 rounded text-white"
+          className="px-4 py-2 mt-4 text-white transition-colors bg-red-500 rounded hover:bg-red-600"
         >
           Close
         </button>
