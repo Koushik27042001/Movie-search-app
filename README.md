@@ -14,8 +14,9 @@ A React movie search app powered by the OMDB API.
    VITE_OMDB_KEY=your_api_key
    ```
    Get a free key at [omdbapi.com](https://www.omdbapi.com/apikey.aspx)
+   get a free key at [TMDBapi.com]
 
-3. Start the dev server:
+4. Start the dev server:
    ```bash
    npm run dev
    ```
