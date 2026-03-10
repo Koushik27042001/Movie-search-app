@@ -6,11 +6,13 @@ import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import ProtectedRoute from "./ProtectedRoute";
+import Explorer from "../pages/explorer";
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Explorer />} />
+      <Route path="/home" element={<Home />} />
       <Route path="/movie/:id" element={<MovieDetails />} />
       <Route path="/favorites" element={<Favorites />} />
       <Route path="/login" element={<Login />} />
